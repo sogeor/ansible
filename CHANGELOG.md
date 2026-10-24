@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.1](https://github.com/sogeor/ansible/compare/v1.0.0...v1.0.1) (2026-10-24)
+
+
+### Changed
+
+* update dependency etcd-io/etcd to v3.7.2 ([#11](https://github.com/sogeor/ansible/issues/11)) ([1a813f3](https://github.com/sogeor/ansible/commit/1a813f39e82722bc198088be01e8e42570db88f8))
+* update ossf/scorecard-action action to v2.5.0 ([#12](https://github.com/sogeor/ansible/issues/12)) ([ef94acd](https://github.com/sogeor/ansible/commit/ef94acd03ff8c76c565c3c3a4edac832e8d18832))
+
 ## 1.0.0 (2026-10-24)
 
 
