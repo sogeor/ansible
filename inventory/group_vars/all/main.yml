@@ -19,7 +19,7 @@ crio_minor: "v1.36"
 pause_image_tag: "3.10.2"
 pause_image: "registry.k8s.io/pause:{{ pause_image_tag }}"
 # renovate: datasource=github-releases depName=etcd-io/etcd extractVersion=^v(?<version>.+)$
-etcd_tools_version: "3.6.8"
+etcd_tools_version: "3.7.2"
 # renovate: datasource=helm depName=cilium registryUrl=https://helm.cilium.io/
 cilium_version: "1.20.3"
 # renovate: datasource=github-releases depName=kubernetes-sigs/gateway-api
