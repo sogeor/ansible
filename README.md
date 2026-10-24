@@ -33,7 +33,7 @@ Deployments run only from `master` in the `production` environment; pull request
 ## Background
 
 | Layer | What | Where |
-|---|---|---|
+| --- | --- | --- |
 | 0 | first boot: user `ansible`, SSH certificates, port 822, firewall | `files/user-data.yaml` (cloud-init) or `files/bootstrap.sh` (installed servers) |
 | 1 | OS: disks, EFI, firewall, WireGuard, hardening, CRI-O, backups | roles, `site.yml` |
 | 2 | cluster start: kubeadm, Gateway API CRDs, Cilium, Flux | roles, `site.yml` |
@@ -47,7 +47,7 @@ inventory/tofu.yml + group_vars + host_vars (SOPS) ──▶ ansible-playbook �
 ```
 
 | Path | Contents |
-|---|---|
+| --- | --- |
 | `inventory/tofu.yml` | inventory plugin: hosts, groups, `ansible_host`, `ansible_port`, `wg_address` |
 | `inventory/group_vars/all/main.yml` | SSH connection, versions, cluster addressing, firewall, WireGuard peers, backups |
 | `inventory/group_vars/all/secrets.sops.yaml` | cluster SOPS key, etcd encryption key |
@@ -72,7 +72,7 @@ Requirements on the workstation:
 The inventory runs `tofu show`, so the shell needs the same environment as `sogeor/tofu`:
 
 | Variable | Value |
-|---|---|
+| --- | --- |
 | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` | S3 credentials for the OpenTofu state (read-only is enough) |
 | `TF_VAR_state_passphrase` | OpenTofu state encryption passphrase |
 
