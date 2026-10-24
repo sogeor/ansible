@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.0.2](https://github.com/sogeor/ansible/compare/v1.0.1...v1.0.2) (2026-10-24)
+
+
+### Changed
+
+* update actions/checkout action to v7 ([#15](https://github.com/sogeor/ansible/issues/15)) ([62b3694](https://github.com/sogeor/ansible/commit/62b369431de89b8de6a85b33ed7f429915e42e1c))
+* update actions/create-github-app-token action to v3 ([#16](https://github.com/sogeor/ansible/issues/16)) ([4f4a384](https://github.com/sogeor/ansible/commit/4f4a3849d8509a00e586b08780528af6073bc525))
+* update github/codeql-action action to v4 ([#17](https://github.com/sogeor/ansible/issues/17)) ([f76e2a4](https://github.com/sogeor/ansible/commit/f76e2a4551e875af3d172748baf6e94b743873e0))
+* update pre-commit (non-major) ([#14](https://github.com/sogeor/ansible/issues/14)) ([36c2729](https://github.com/sogeor/ansible/commit/36c2729b900c166a4f49a22bfb5d5a7f7eed841a))
+* update pre-commit hook fsfe/reuse-tool to v6 ([#18](https://github.com/sogeor/ansible/issues/18)) ([212dbc9](https://github.com/sogeor/ansible/commit/212dbc91b86151c46f2bca6701d6efe7d7788cf6))
+* update pre-commit hook pre-commit/pre-commit-hooks to v6 ([#19](https://github.com/sogeor/ansible/issues/19)) ([6c43dba](https://github.com/sogeor/ansible/commit/6c43dba6afc80c7b16f8cafeec739e16c5fe6e9e))
+
 ## [1.0.1](https://github.com/sogeor/ansible/compare/v1.0.0...v1.0.1) (2026-10-24)
 
 
