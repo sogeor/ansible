@@ -1,0 +1,4 @@
+---
+fw_public_tcp: [80, 443]
+fw_public_udp: []
+swap_size_mb: 1024

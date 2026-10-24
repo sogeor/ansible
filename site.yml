@@ -1,0 +1,6 @@
+---
+- name: Kubernetes nodes
+  hosts: control_plane
+  roles: []
+  # Roles are added one pull request at a time (guide, section 10):
+  # base, storage, firewall, wireguard, kubernetes_node, kubeadm_init, cilium, flux, backup

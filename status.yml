@@ -1,0 +1,5 @@
+---
+- name: Status page server
+  hosts: status
+  roles: []
+  # base, firewall, wireguard, hardening, status_vps (guide, section 10.14)

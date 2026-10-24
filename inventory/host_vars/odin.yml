@@ -1,0 +1,11 @@
+---
+# Interface and disk UUIDs: fill in from the server (ip -br link, lsblk -f) before the storage role.
+node_iface: eth0
+node_ip: "{{ ansible_host }}"
+# node_private_ip: 192.168.250.1      # once the Selectel private network exists
+
+boot_uuid: "..."
+data_uuid: "..."
+esp_primary_uuid: "..."               # Kingston, /boot/efi
+esp_secondary_uuid: "..."             # SPCC, /boot/efi2
+root_uuid: "..."

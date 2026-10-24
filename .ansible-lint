@@ -1,0 +1,5 @@
+---
+# files/ holds provider bootstrap data (cloud-init user data, shell script), not Ansible content;
+# "#cloud-config" must stay without a space, cloud-init detects the format by this exact header.
+exclude_paths:
+  - files/

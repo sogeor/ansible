@@ -1,0 +1,21 @@
+name: deploy
+on:
+  push:
+    branches: [master]
+    paths-ignore: ["**.md", "LICENSE*", "LICENSES/**", "CHANGELOG.md"]
+  repository_dispatch:
+    types: [tofu-applied]
+  workflow_dispatch:
+    inputs:
+      check:
+        description: Check mode (no changes)
+        type: boolean
+        default: false
+permissions: { contents: read }
+concurrency: { group: deploy, cancel-in-progress: false }
+jobs:
+  deploy:
+    uses: sogeor/workflows/.github/workflows/ansible-deploy.yml@9bf70c2efed3619055210da0d0f70d9741850fcc # v1
+    with:
+      check: ${{ inputs.check == true }}
+    secrets: inherit

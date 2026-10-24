@@ -1,0 +1,191 @@
+#cloud-config
+# Sogeor server bootstrap for a fresh Debian or Ubuntu install (Selectel and any cloud-init provider).
+# Same end state as bootstrap.sh. Placeholders, filled per host by scripts/render-user-data.sh:
+#   HOSTNAME, DOMAIN, USER_CA_PUBKEY, BREAK_GLASS_PUBKEY
+# Contains only public data; the template is kept in Git (ansible/files/user-data.yaml).
+hostname: HOSTNAME
+fqdn: HOSTNAME.DOMAIN
+prefer_fqdn_over_hostname: false
+# /etc/hosts is written by runcmd: providers (Selectel) merge their own hostname settings,
+# and the cloud-init template then produces "127.0.1.1 odin odin" without the FQDN
+manage_etc_hosts: false
+timezone: Etc/UTC
+
+# Overrides provider defaults (Selectel images ship ssh_pwauth: true, disable_root: false)
+disable_root: true
+ssh_pwauth: false
+
+users:
+  - name: ansible
+    gecos: Ansible automation
+    groups: [sudo]
+    shell: /bin/bash
+    # "*" = no password; unlike a locked "!" it does not block key logins when sshd runs with UsePAM no
+    lock_passwd: false
+    hashed_passwd: "*"
+    sudo: "ALL=(ALL) NOPASSWD:ALL"
+    # Break-glass key (kept offline); everyday access uses certificates signed by the user CA
+    ssh_authorized_keys:
+      - BREAK_GLASS_PUBKEY
+
+package_update: true
+package_upgrade: true
+packages:
+  - ca-certificates
+  - curl
+  - iproute2
+  - nftables
+  - openssh-server
+  - python3
+  - python3-apt
+  - sudo
+  - wireguard-tools
+
+write_files:
+  - path: /etc/ssh/sogeor_user_ca.pub
+    permissions: "0644"
+    content: |
+      USER_CA_PUBKEY
+
+  - path: /etc/ssh/auth_principals/ansible
+    permissions: "0644"
+    content: |
+      ansible
+
+  - path: /etc/ssh/sshd_config.d/00-sogeor.conf
+    permissions: "0644"
+    content: |
+      Port 822
+      AllowUsers ansible
+      AuthenticationMethods publickey
+      AuthorizedPrincipalsFile /etc/ssh/auth_principals/%u
+      TrustedUserCAKeys /etc/ssh/sogeor_user_ca.pub
+      PubkeyAuthentication yes
+      PasswordAuthentication no
+      KbdInteractiveAuthentication no
+      PermitRootLogin no
+      PermitEmptyPasswords no
+      MaxAuthTries 3
+      LoginGraceTime 20
+      ClientAliveInterval 300
+      ClientAliveCountMax 2
+      AllowAgentForwarding no
+      AllowTcpForwarding local
+      X11Forwarding no
+      PermitTunnel no
+
+  # Used only where sshd runs through socket activation (Ubuntu 24.04+); harmless elsewhere
+  - path: /etc/systemd/system/ssh.socket.d/10-port.conf
+    permissions: "0644"
+    content: |
+      [Socket]
+      ListenStream=
+      ListenStream=822
+
+  # Keeps the settings if cloud-init ever runs its per-instance modules again (new instance-id);
+  # "99_zz" sorts after provider files such as Selectel's 99_*
+  - path: /etc/cloud/cloud.cfg.d/99_zz_sogeor.cfg
+    permissions: "0644"
+    content: |
+      #cloud-config
+      disable_root: true
+      manage_etc_hosts: false
+      preserve_hostname: true
+      ssh_deletekeys: false
+      ssh_pwauth: false
+
+  # First-boot steps as one script with a log (provider images may not keep cloud-init output)
+  - path: /usr/local/sbin/sogeor-firstboot
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      # Log: /var/log/sogeor-firstboot.log. Safe to run again.
+      set -uo pipefail
+      exec >>/var/log/sogeor-firstboot.log 2>&1
+      echo "=== $(date -Is) sogeor-firstboot"
+      set -x
+      H=HOSTNAME
+      D=DOMAIN
+      fail() { echo "FAILED: $*"; exit 1; }
+
+      # Hostname and /etc/hosts (providers merge their own hostname settings)
+      printf '%s\n' "$H" > /etc/hostname
+      hostname "$H"
+      sed -i -e '$a\' /etc/hosts
+      sed -i -E -e '/^127\.0\.1\.1[[:space:]]/d' -e ':a' \
+        -e '/^[0-9a-fA-F.:]+[[:space:]]/ s/[[:space:]]+'"$H"'(\.'"$D"')?([[:space:]]|$)/\2/' -e 'ta' \
+        -e '/^[0-9a-fA-F.:]+[[:space:]]*$/d' /etc/hosts
+      printf '127.0.1.1 %s.%s %s\n' "$H" "$D" "$H" >> /etc/hosts
+
+      # Other firewall managers would fight with our nftables table
+      for p in ufw firewalld; do
+        if dpkg -s "$p" >/dev/null 2>&1; then DEBIAN_FRONTEND=noninteractive apt-get -y purge "$p"; fi
+      done
+
+      # Only Port 822 may remain (the Ubuntu socket generator opens every Port it finds)
+      sed -i -E 's/^[[:space:]]*Port[[:space:]]/#&/' /etc/ssh/sshd_config
+      for f in /etc/ssh/sshd_config.d/*.conf; do
+        if [ -e "$f" ] && [ "$f" != /etc/ssh/sshd_config.d/00-sogeor.conf ]; then
+          sed -i -E 's/^[[:space:]]*Port[[:space:]]/#&/' "$f"
+        fi
+      done
+
+      # SSH on 822; the firewall is applied only when sshd accepted the config and listens on 822.
+      # On failure sshd keeps the image defaults (port 22, break-glass key for ansible).
+      install -d -m 0755 /run/sshd
+      sshd -t || fail "sshd -t"
+      systemctl daemon-reload
+      if systemctl is-active --quiet ssh.socket; then systemctl restart ssh.socket || fail "restart ssh.socket"; fi
+      systemctl restart ssh || fail "restart ssh"
+      for i in $(seq 1 15); do
+        [ -n "$(ss -tlnH 'sport = :822')" ] && break
+        sleep 1
+      done
+      [ -n "$(ss -tlnH 'sport = :822')" ] || fail "nothing listens on 822"
+
+      install -m 0755 /etc/sogeor/nftables.conf /etc/nftables.conf
+      nft -f /etc/nftables.conf || fail "nft -f"
+      systemctl enable nftables || fail "enable nftables"
+      nft list table inet host >/dev/null || fail "table inet host missing after load"
+
+      rm -f /root/.ssh/authorized_keys
+      echo "=== OK"
+
+  # Minimal firewall until the Ansible firewall role takes over (same table).
+  # Written aside and installed by runcmd: some provider images (Selectel) do not run
+  # write_files with "defer", and the nftables package would keep its own /etc/nftables.conf.
+  - path: /etc/sogeor/nftables.conf
+    permissions: "0644"
+    content: |
+      #!/usr/sbin/nft -f
+      # Managed by Sogeor bootstrap; replaced by the Ansible firewall role (same table).
+      # Debian's default "inet filter" table (accept-all) is removed.
+      table inet filter
+      delete table inet filter
+      table inet host
+      delete table inet host
+      table inet host {
+          chain input {
+              type filter hook input priority filter; policy drop;
+              iif lo accept
+              ct state established,related accept
+              ct state invalid drop
+              meta l4proto { icmp, ipv6-icmp } accept
+              tcp dport 822 accept
+              udp dport 51820 accept
+          }
+      }
+
+runcmd:
+  - [/usr/local/sbin/sogeor-firstboot]
+
+# Reboot (if the upgrade requires it) only at the very end, after runcmd.
+# package_reboot_if_required would reboot before runcmd; on Selectel the NoCloud seed is gone
+# after the first boot, cloud-init then starts a new "None" instance and runcmd never runs.
+power_state:
+  mode: reboot
+  delay: now
+  message: "Sogeor bootstrap: reboot required by package upgrade"
+  condition: test -f /var/run/reboot-required
+
+final_message: "Sogeor bootstrap finished after $UPTIME seconds"
