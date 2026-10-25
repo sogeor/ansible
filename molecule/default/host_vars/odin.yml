@@ -1,0 +1,5 @@
+# Test values instead of inventory/host_vars/odin.yml: the container is reached
+# through Docker as root, not over SSH as the ansible user.
+ansible_user: root
+node_iface: eth0
+node_ip: 127.0.0.1

@@ -2,7 +2,7 @@ name: deploy
 on:
   push:
     branches: [master]
-    paths-ignore: ["**.md", "LICENSE*", "LICENSES/**", "CHANGELOG.md"]
+    paths-ignore: ["**.md", "LICENSE*", "LICENSES/**", "CHANGELOG.md", "molecule/**"]
   repository_dispatch:
     types: [tofu-applied]
   workflow_dispatch:

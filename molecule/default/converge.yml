@@ -1,0 +1,5 @@
+- name: Kubernetes nodes
+  ansible.builtin.import_playbook: ../../site.yml
+
+- name: Status page server
+  ansible.builtin.import_playbook: ../../status.yml
