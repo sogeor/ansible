@@ -1,0 +1,11 @@
+galaxy_info:
+  author: Sogeor maintainers
+  description: Public status page with Gatus and Caddy in Podman containers
+  license: LicenseRef-Sogeor-1.0
+  min_ansible_version: "2.21"
+  platforms:
+    - name: Debian
+      versions: [trixie]
+    - name: Ubuntu
+      versions: [noble]
+dependencies: []

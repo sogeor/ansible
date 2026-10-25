@@ -1,0 +1,28 @@
+# {{ ansible_managed }}
+{
+	email {{ status_vps_acme_email }}
+	admin off
+}
+
+{{ status_vps_domain }} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		-Server
+	}
+
+	# Logo and favicon from sogeor/status, served without external requests
+	handle_path /assets/* {
+		root * /srv/assets
+		file_server
+	}
+
+	handle {
+		reverse_proxy 127.0.0.1:8080
+	}
+}

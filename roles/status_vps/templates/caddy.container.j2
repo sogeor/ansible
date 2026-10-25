@@ -1,0 +1,27 @@
+# {{ ansible_managed }}
+[Unit]
+Description=Caddy for {{ status_vps_domain }}
+Wants=network-online.target
+After=network-online.target gatus.service
+
+[Container]
+ContainerName=caddy
+Image=docker.io/library/caddy:{{ status_vps_caddy_version }}
+Pull=missing
+# Ports 80 (ACME HTTP-01, redirect) and 443 on the host
+Network=host
+Volume=/etc/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+Volume={{ status_vps_config_dir }}/assets:/srv/assets:ro
+Volume=/var/lib/caddy/data:/data
+Volume=/var/lib/caddy/config:/config
+ReadOnly=true
+NoNewPrivileges=true
+DropCapability=all
+AddCapability=NET_BIND_SERVICE
+
+[Service]
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

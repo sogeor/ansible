@@ -9,3 +9,9 @@ swap_size_mb: 1024
 wg_address: 172.20.1.1
 wg_private_key: "{{ lookup('ansible.builtin.file', lookup('ansible.builtin.env', 'MOLECULE_EPHEMERAL_DIRECTORY') ~ '/wg-zelda.key') }}"
 wireguard_manage_service: false
+# role firewall and status_vps: test secrets only; containers are not started in a container
+firewall_public_tcp: [80, 443]
+gatus_env: |
+  TELEGRAM_BOT_TOKEN=123456:test-token-not-a-real-one-xxxxxxxxxx
+  TELEGRAM_CHAT_ID=0
+status_vps_manage_containers: false

@@ -1,0 +1,18 @@
+# Quadlet units are generated at daemon-reload, so every restart reloads systemd first.
+- name: Restart Gatus
+  ansible.builtin.systemd_service:
+    name: gatus
+    state: restarted
+    daemon_reload: true
+  when: status_vps_manage_containers | bool
+  # In check mode the Quadlet units are not generated yet.
+  ignore_errors: "{{ ansible_check_mode }}"
+
+- name: Restart Caddy
+  ansible.builtin.systemd_service:
+    name: caddy
+    state: restarted
+    daemon_reload: true
+  when: status_vps_manage_containers | bool
+  # In check mode the Quadlet units are not generated yet.
+  ignore_errors: "{{ ansible_check_mode }}"

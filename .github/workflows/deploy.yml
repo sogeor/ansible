@@ -4,7 +4,7 @@ on:
     branches: [master]
     paths-ignore: ["**.md", "LICENSE*", "LICENSES/**", "CHANGELOG.md", "molecule/**"]
   repository_dispatch:
-    types: [tofu-applied]
+    types: [status-config, tofu-applied]
   workflow_dispatch:
     inputs:
       check:

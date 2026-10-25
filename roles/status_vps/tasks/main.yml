@@ -1,0 +1,120 @@
+- name: Gatus secrets are complete
+  ansible.builtin.assert:
+    that:
+      - status_vps_gatus_env is search('(?m)^TELEGRAM_BOT_TOKEN=\d+:[A-Za-z0-9_-]{30,}$')
+      - status_vps_gatus_env is search('(?m)^TELEGRAM_CHAT_ID=-?\d+$')
+    fail_msg: gatus_env needs TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID lines
+    quiet: true
+  no_log: true
+  tags: [status_vps]
+
+- name: Podman and Git
+  ansible.builtin.apt:
+    name: [git, podman]
+    state: present
+  tags: [status_vps]
+
+- name: Directories
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "{{ item.mode }}"
+  loop:
+    - { path: /etc/gatus, mode: "0750" }
+    - { path: /etc/caddy, mode: "0755" }
+    - { path: /var/lib/gatus, mode: "0700" }
+    - { path: /var/lib/caddy/data, mode: "0700" }
+    - { path: /var/lib/caddy/config, mode: "0700" }
+  loop_control:
+    label: "{{ item.path }}"
+  tags: [status_vps]
+
+- name: Gatus configuration and assets from sogeor/status
+  ansible.builtin.git:
+    repo: "{{ status_vps_config_repo }}"
+    dest: "{{ status_vps_config_dir }}"
+    version: "{{ status_vps_config_ref }}"
+    depth: 1
+    force: true
+    single_branch: true
+  notify: Restart Gatus
+  # In check mode git may not be installed yet.
+  ignore_errors: "{{ ansible_check_mode }}"
+  tags: [status_vps]
+
+- name: Gatus secrets
+  ansible.builtin.copy:
+    dest: /etc/gatus/env
+    content: "{{ status_vps_gatus_env }}"
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+  diff: false
+  notify: Restart Gatus
+  tags: [status_vps]
+
+- name: Caddyfile
+  ansible.builtin.template:
+    src: Caddyfile.j2
+    dest: /etc/caddy/Caddyfile
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart Caddy
+  tags: [status_vps]
+
+- name: Quadlet directory
+  ansible.builtin.file:
+    path: /etc/containers/systemd
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  tags: [status_vps]
+
+- name: Gatus Quadlet unit
+  ansible.builtin.template:
+    src: gatus.container.j2
+    dest: /etc/containers/systemd/gatus.container
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart Gatus
+  tags: [status_vps]
+
+- name: Caddy Quadlet unit
+  ansible.builtin.template:
+    src: caddy.container.j2
+    dest: /etc/containers/systemd/caddy.container
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart Caddy
+  tags: [status_vps]
+
+- name: Containers are running
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    state: started
+    daemon_reload: true
+  loop: [gatus, caddy]
+  when: status_vps_manage_containers | bool
+  # In check mode the Quadlet units are not generated yet.
+  ignore_errors: "{{ ansible_check_mode }}"
+  tags: [status_vps]
+
+- name: Gatus is healthy
+  ansible.builtin.uri:
+    url: http://127.0.0.1:8080/health
+    return_content: true
+  register: status_vps_health
+  until: status_vps_health.status == 200
+  retries: 30
+  delay: 2
+  when:
+    - status_vps_manage_containers | bool
+    - not ansible_check_mode
+  tags: [status_vps]
