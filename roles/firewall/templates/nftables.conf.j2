@@ -1,0 +1,53 @@
+#!/usr/sbin/nft -f
+# {{ ansible_managed }} (role firewall)
+# Only table inet host is replaced; Cilium and other tables stay intact.
+# Debian's default "inet filter" table (accept-all) is removed.
+table inet filter
+delete table inet filter
+table inet host
+delete table inet host
+
+table inet host {
+    set ssh_meter4 { type ipv4_addr; flags dynamic; timeout 1m; }
+    set ssh_meter6 { type ipv6_addr; flags dynamic; timeout 1m; }
+
+    chain input {
+        type filter hook input priority filter; policy drop;
+
+        iif lo accept
+        ct state established,related accept
+        ct state invalid drop
+        meta l4proto { icmp, ipv6-icmp } accept
+{% if firewall_kubernetes %}
+
+        # Pods and Cilium interfaces; replies to the Cilium L7 proxy bypass conntrack
+        iifname { "cilium_*", "lxc*" } accept
+        ip saddr {{ firewall_pod_cidr }} accept
+        ip daddr {{ firewall_pod_cidr }} accept
+{% endif %}
+
+        # SSH: at most {{ firewall_ssh_rate }} new connections per address (burst {{ firewall_ssh_burst }})
+        tcp dport {{ firewall_ssh_port }} ct state new add @ssh_meter4 { ip saddr limit rate over {{ firewall_ssh_rate }} burst {{ firewall_ssh_burst }} packets } drop
+        tcp dport {{ firewall_ssh_port }} ct state new add @ssh_meter6 { ip6 saddr limit rate over {{ firewall_ssh_rate }} burst {{ firewall_ssh_burst }} packets } drop
+        tcp dport {{ firewall_ssh_port }} accept
+
+        # WireGuard answers only peers with a known key
+        udp dport {{ firewall_wg_port }} accept
+{% if firewall_wireguard %}
+        iifname "{{ firewall_wg_interface }}" ip saddr {{ firewall_wg_network }} tcp dport { {{ firewall_wg_allowed_tcp | join(', ') }} } accept
+{% endif %}
+{% if firewall_public_tcp %}
+        tcp dport { {{ firewall_public_tcp | join(', ') }} } accept
+{% endif %}
+{% if firewall_public_udp %}
+        udp dport { {{ firewall_public_udp | join(', ') }} } accept
+{% endif %}
+    }
+{% if firewall_forward_drop %}
+
+    # Not a router: nothing is forwarded
+    chain forward {
+        type filter hook forward priority filter; policy drop;
+    }
+{% endif %}
+}

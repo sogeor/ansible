@@ -1,0 +1,22 @@
+# Ports are opened by the roles that run the services, not in advance.
+firewall_ssh_port: "{{ ssh_port }}"
+firewall_ssh_rate: 10/minute # new SSH connections per source address
+firewall_ssh_burst: 20
+firewall_wg_port: "{{ wg_port }}"
+firewall_public_tcp: []
+firewall_public_udp: []
+
+# Enabled by the wireguard role: admin ports reachable only through the tunnel.
+firewall_wireguard: false
+firewall_wg_interface: wg0
+firewall_wg_network: "{{ wg_network }}"
+firewall_wg_allowed_tcp: "{{ wg_allowed_tcp }}"
+
+# Enabled by kubernetes_node: pod traffic and Cilium interfaces; Cilium handles forwarding.
+firewall_kubernetes: false
+firewall_pod_cidr: "{{ cluster_cidr }}"
+firewall_forward_drop: true
+
+# Seconds before the previous ruleset is restored if the new one locks Ansible out.
+firewall_rollback_seconds: 300
+firewall_state_dir: /var/lib/sogeor
