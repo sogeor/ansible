@@ -1,5 +1,8 @@
 ---
 - name: Status page server
   hosts: status
-  roles: []
-  # base, firewall, wireguard, hardening, status_vps (guide, section 10.14)
+  serial: 1
+  max_fail_percentage: 0
+  roles:
+    - role: base
+  # Next roles: firewall, wireguard, hardening, status_vps (guide, section 10.14)

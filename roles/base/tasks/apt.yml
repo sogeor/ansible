@@ -1,0 +1,51 @@
+# Official archives with Signed-By; new lists are written before old ones are removed,
+# and the cache is refreshed before any package is installed.
+- name: Debian sources
+  ansible.builtin.template:
+    src: debian.sources.j2
+    dest: /etc/apt/sources.list.d/debian.sources
+    owner: root
+    group: root
+    mode: "0644"
+  when: ansible_facts['distribution'] == 'Debian'
+  notify: Update apt cache
+
+- name: Ubuntu sources
+  ansible.builtin.template:
+    src: ubuntu.sources.j2
+    dest: /etc/apt/sources.list.d/ubuntu.sources
+    owner: root
+    group: root
+    mode: "0644"
+  when: ansible_facts['distribution'] == 'Ubuntu'
+  notify: Update apt cache
+
+- name: Selectel cloud-init repository
+  ansible.builtin.template:
+    src: selectel-cloud-init.sources.j2
+    dest: /etc/apt/sources.list.d/selectel-cloud-init.sources
+    owner: root
+    group: root
+    mode: "0644"
+  when: base_selectel_cloud_init | bool
+  notify: Update apt cache
+
+- name: Only cloud-init from the Selectel repository
+  ansible.builtin.template:
+    src: selectel-pin.j2
+    dest: /etc/apt/preferences.d/50-sogeor-selectel
+    owner: root
+    group: root
+    mode: "0644"
+  when: base_selectel_cloud_init | bool
+  notify: Update apt cache
+
+- name: Provider mirror list replaced by the official sources
+  ansible.builtin.file:
+    path: /etc/apt/sources.list.d/mirrors.sources
+    state: absent
+  when: ansible_facts['distribution'] == 'Ubuntu'
+  notify: Update apt cache
+
+- name: Refresh apt cache before installing packages
+  ansible.builtin.meta: flush_handlers

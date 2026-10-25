@@ -1,0 +1,29 @@
+# No SSH, firewall rules or Kubernetes settings here: see hardening, firewall, kubernetes_node.
+- name: Preconditions
+  ansible.builtin.import_tasks: assert.yml
+  tags: [base]
+
+- name: Package sources
+  ansible.builtin.import_tasks: apt.yml
+  tags: [base, base_apt]
+
+- name: Packages
+  ansible.builtin.import_tasks: packages.yml
+  tags: [base, base_packages]
+
+- name: System settings
+  ansible.builtin.import_tasks: system.yml
+  tags: [base, base_system]
+
+- name: Journal
+  ansible.builtin.import_tasks: journald.yml
+  tags: [base, base_journald]
+
+- name: Swap
+  ansible.builtin.import_tasks: swap.yml
+  when: base_swap_size_mb | int > 0
+  tags: [base, base_swap]
+
+- name: Automatic security updates
+  ansible.builtin.import_tasks: upgrades.yml
+  tags: [base, base_upgrades]

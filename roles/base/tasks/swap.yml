@@ -1,0 +1,47 @@
+# A container cannot enable swap; the whole file is skipped in Molecule.
+- name: Swap file
+  ansible.builtin.command:
+    cmd: "fallocate -l {{ base_swap_size_mb }}M {{ base_swap_file }}"
+    creates: "{{ base_swap_file }}"
+  register: base_swap_created
+  notify: Format swap file
+  tags: [molecule-notest]
+
+- name: Swap file permissions
+  ansible.builtin.file:
+    path: "{{ base_swap_file }}"
+    owner: root
+    group: root
+    mode: "0600"
+  # In check mode the file is not created yet.
+  when: not (ansible_check_mode and base_swap_created is changed)
+  tags: [molecule-notest]
+
+- name: Swap file in fstab
+  ansible.builtin.lineinfile:
+    path: /etc/fstab
+    regexp: '^{{ base_swap_file | regex_escape }}\s'
+    line: "{{ base_swap_file }} none swap sw 0 0"
+    owner: root
+    group: root
+    mode: "0644"
+  tags: [molecule-notest]
+
+- name: Format a new swap file before enabling it
+  ansible.builtin.meta: flush_handlers
+  tags: [molecule-notest]
+
+- name: Active swap areas
+  ansible.builtin.command:
+    cmd: swapon --show=NAME --noheadings
+  register: base_swap_active
+  changed_when: false
+  check_mode: false
+  tags: [molecule-notest]
+
+- name: Swap enabled
+  ansible.builtin.command:
+    cmd: "swapon {{ base_swap_file }}"
+  when: base_swap_file not in base_swap_active.stdout_lines
+  changed_when: true
+  tags: [molecule-notest]

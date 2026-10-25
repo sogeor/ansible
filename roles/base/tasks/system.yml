@@ -1,0 +1,51 @@
+- name: Time zone
+  ansible.builtin.file:
+    src: "/usr/share/zoneinfo/{{ base_timezone }}"
+    dest: /etc/localtime
+    state: link
+    force: true
+
+- name: Time zone name
+  ansible.builtin.copy:
+    dest: /etc/timezone
+    content: "{{ base_timezone }}\n"
+    owner: root
+    group: root
+    mode: "0644"
+
+# Docker bind-mounts /etc/hosts, so the file cannot be replaced in Molecule.
+- name: Host name resolves to itself
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    regexp: '^127\.0\.1\.1\s'
+    line: "127.0.1.1 {{ inventory_hostname }}.{{ base_domain }} {{ inventory_hostname }}"
+    owner: root
+    group: root
+    mode: "0644"
+  tags: [molecule-notest]
+
+# chrony replaces systemd-timesyncd (package conflict); a container must not set the host clock.
+- name: Chrony is running
+  ansible.builtin.systemd_service:
+    name: chrony
+    enabled: true
+    state: started
+  # In check mode the package may not be installed yet.
+  ignore_errors: "{{ ansible_check_mode }}"
+  tags: [molecule-notest]
+
+- name: Weekly TRIM
+  ansible.builtin.systemd_service:
+    name: fstrim.timer
+    enabled: true
+    state: started
+
+- name: SMART monitoring on hardware servers
+  ansible.builtin.systemd_service:
+    name: smartmontools
+    enabled: true
+    state: started
+  # In check mode the package may not be installed yet.
+  ignore_errors: "{{ ansible_check_mode }}"
+  when: "'smartmontools' in base_packages_extra"
+  tags: [molecule-notest]

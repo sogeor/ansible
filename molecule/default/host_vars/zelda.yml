@@ -1,6 +1,9 @@
 # Test values instead of inventory/host_vars/zelda.yml: the container is reached
 # through Docker as root, not over SSH as the ansible user.
 ansible_user: root
+base_auto_reboot: true
+# The test image has no Selectel keyring; the repository exists only on the VDS.
+base_selectel_cloud_init: false
 fw_public_tcp: [80, 443]
 fw_public_udp: []
 swap_size_mb: 1024

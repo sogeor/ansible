@@ -6,11 +6,86 @@
     - name: Distribution matches the server
       ansible.builtin.assert:
         that: >-
-          (inventory_hostname == 'odin' and ansible_distribution == 'Debian' and ansible_distribution_major_version == '13')
-          or (inventory_hostname == 'zelda' and ansible_distribution == 'Ubuntu' and ansible_distribution_version == '24.04')
+          (inventory_hostname == 'odin' and ansible_facts['distribution'] == 'Debian' and ansible_facts['distribution_major_version'] == '13')
+          or (inventory_hostname == 'zelda' and ansible_facts['distribution'] == 'Ubuntu' and ansible_facts['distribution_version'] == '24.04')
         quiet: true
 
     - name: Systemd is PID 1
       ansible.builtin.assert:
-        that: ansible_service_mgr == 'systemd'
+        that: ansible_facts['service_mgr'] == 'systemd'
+        quiet: true
+
+    # --- role base ---
+    - name: Installed packages
+      ansible.builtin.package_facts:
+
+    - name: Base packages are installed
+      ansible.builtin.assert:
+        that: item in ansible_facts['packages']
+        quiet: true
+      loop: [chrony, jq, needrestart, nftables, tzdata, unattended-upgrades]
+
+    - name: Hardware packages only on odin
+      ansible.builtin.assert:
+        that: ('smartmontools' in ansible_facts['packages']) == (inventory_hostname == 'odin')
+        quiet: true
+
+    - name: Read apt and system configuration
+      ansible.builtin.slurp:
+        src: "{{ item }}"
+      register: verify_files
+      loop:
+        - "/etc/apt/sources.list.d/{{ 'debian' if inventory_hostname == 'odin' else 'ubuntu' }}.sources"
+        - /etc/systemd/journald.conf.d/50-sogeor.conf
+        - /etc/apt/apt.conf.d/52sogeor-unattended-upgrades
+        - /etc/needrestart/conf.d/50-sogeor.conf
+        - /etc/timezone
+
+    - name: Configuration content
+      vars:
+        verify_content: "{{ verify_files.results | map(attribute='content') | map('b64decode') | list }}"
+      ansible.builtin.assert:
+        that:
+          - "'security' in verify_content[0]"
+          - "'Signed-By:' in verify_content[0]"
+          - "'deb-src' not in verify_content[0]"
+          - inventory_hostname != 'odin' or 'non-free-firmware' in verify_content[0]
+          - inventory_hostname != 'zelda' or 'archive.ubuntu.com' in verify_content[0]
+          - "('SystemMaxUse=2G' if inventory_hostname == 'odin' else 'SystemMaxUse=200M') in verify_content[1]"
+          - "('Automatic-Reboot \"true\"' if inventory_hostname == 'zelda' else 'Automatic-Reboot \"false\"') in verify_content[2]"
+          - "\"$nrconf{restart} = 'l';\" in verify_content[3]"
+          - verify_content[4] | trim == 'Etc/UTC'
+        quiet: true
+
+    - name: Provider mirror list is gone
+      ansible.builtin.stat:
+        path: /etc/apt/sources.list.d/mirrors.sources
+      register: verify_mirrors
+
+    - name: No provider mirror list
+      ansible.builtin.assert:
+        that: not verify_mirrors.stat.exists
+        quiet: true
+
+    - name: Local time is UTC
+      ansible.builtin.stat:
+        path: /etc/localtime
+      register: verify_localtime
+
+    - name: Localtime points to Etc/UTC
+      ansible.builtin.assert:
+        that: verify_localtime.stat.lnk_source is search('zoneinfo/Etc/UTC$')
+        quiet: true
+
+    - name: Apt timer drop-ins
+      ansible.builtin.slurp:
+        src: "/etc/systemd/system/{{ item }}.d/50-sogeor.conf"
+      register: verify_timers
+      loop: [apt-daily.timer, apt-daily-upgrade.timer]
+
+    - name: Package lists at 23:00 and upgrades at 00:00 UTC
+      ansible.builtin.assert:
+        that:
+          - "'OnCalendar=*-*-* 23:00' in (verify_timers.results[0].content | b64decode)"
+          - "'OnCalendar=*-*-* 00:00' in (verify_timers.results[1].content | b64decode)"
         quiet: true

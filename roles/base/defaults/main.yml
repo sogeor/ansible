@@ -1,0 +1,36 @@
+# Packages for every server; hardware-specific ones go to base_packages_extra.
+base_packages:
+  - age
+  - ca-certificates
+  - chrony
+  - curl
+  - gpg
+  - htop
+  - jq
+  - needrestart
+  - nftables
+  - rsync
+  - tmux
+  - tzdata
+  - unattended-upgrades
+  - zstd
+base_packages_extra: []
+
+base_timezone: "{{ timezone }}"
+base_domain: "{{ domain }}"
+
+base_journal_max_use: 200M
+
+# 0 disables the swap file; Kubernetes nodes turn swap off in kubernetes_node.
+base_swap_size_mb: "{{ swap_size_mb | default(0) }}"
+base_swap_file: /swapfile
+
+# Security updates: package lists, installation and the optional reboot (UTC).
+base_apt_update_time: "23:00"
+base_upgrade_time: "00:00"
+base_timer_random_delay: 15m
+base_auto_reboot: false
+base_reboot_time: "00:30"
+
+# Selectel VDS: keep the provider's cloud-init repository, allow only cloud-init from it.
+base_selectel_cloud_init: false

@@ -1,0 +1,27 @@
+# needrestart only lists services to restart: an apt run from CI must not restart sshd.
+- name: Needrestart configuration directory
+  ansible.builtin.file:
+    path: /etc/needrestart/conf.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Needrestart lists services instead of restarting them
+  ansible.builtin.copy:
+    dest: /etc/needrestart/conf.d/50-sogeor.conf
+    content: |
+      # Managed by Ansible (sogeor/ansible, role base)
+      $nrconf{restart} = 'l';
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Packages
+  ansible.builtin.apt:
+    name: "{{ base_packages + base_packages_extra }}"
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  environment:
+    NEEDRESTART_MODE: l

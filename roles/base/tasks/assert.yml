@@ -1,0 +1,22 @@
+- name: Supported operating system with systemd
+  ansible.builtin.assert:
+    that:
+      - >-
+        (ansible_facts['distribution'] == 'Debian' and ansible_facts['distribution_major_version'] == '13')
+        or (ansible_facts['distribution'] == 'Ubuntu' and ansible_facts['distribution_version'] == '24.04')
+      - ansible_facts['service_mgr'] == 'systemd'
+    fail_msg: base supports Debian 13 and Ubuntu 24.04 with systemd only
+    quiet: true
+
+- name: Selectel keyring is present
+  ansible.builtin.stat:
+    path: /usr/share/keyrings/openstack.gpg
+  register: base_selectel_keyring
+  when: base_selectel_cloud_init | bool
+
+- name: Selectel repository can be verified
+  ansible.builtin.assert:
+    that: base_selectel_keyring.stat.exists
+    fail_msg: /usr/share/keyrings/openstack.gpg is missing; the Selectel cloud-init repository cannot be verified
+    quiet: true
+  when: base_selectel_cloud_init | bool

@@ -1,0 +1,7 @@
+// {{ ansible_managed }}
+// Origins stay the distribution defaults (security updates) from 50unattended-upgrades.
+Unattended-Upgrade::Remove-Unused-Kernel-Packages "true";
+Unattended-Upgrade::Remove-Unused-Dependencies "true";
+Unattended-Upgrade::Automatic-Reboot "{{ base_auto_reboot | bool | lower }}";
+Unattended-Upgrade::Automatic-Reboot-WithUsers "true";
+Unattended-Upgrade::Automatic-Reboot-Time "{{ base_reboot_time }}";

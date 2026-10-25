@@ -1,0 +1,9 @@
+# {{ ansible_managed }}
+# The Selectel repository may only provide cloud-init; any other package from it is never installed.
+Package: cloud-init
+Pin: origin "mirror.selectel.ru"
+Pin-Priority: 500
+
+Package: *
+Pin: origin "mirror.selectel.ru"
+Pin-Priority: -1

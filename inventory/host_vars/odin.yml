@@ -1,4 +1,8 @@
 ---
+# role base: dedicated server, no automatic reboot (single control plane; kured later)
+base_journal_max_use: 2G
+base_packages_extra: [efibootmgr, mdadm, nvme-cli, smartmontools, xfsprogs]
+
 # Interface and disk UUIDs: fill in from the server (ip -br link, lsblk -f) before the storage role.
 node_iface: eth0
 node_ip: "{{ ansible_host }}"
