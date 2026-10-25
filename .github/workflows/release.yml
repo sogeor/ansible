@@ -4,5 +4,5 @@ permissions: { contents: read }
 jobs:
   release:
     permissions: { attestations: write, contents: read, id-token: write }
-    uses: sogeor/workflows/.github/workflows/release.yml@95450ec9900a41a9ef161879675d1851e93b2d56 # v1.3.0
+    uses: sogeor/workflows/.github/workflows/release.yml@a9aab9747d736fc8486adbb25e6945f2468e2a72 # v1.3.1
     secrets: inherit
