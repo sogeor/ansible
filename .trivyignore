@@ -1,0 +1,3 @@
+# DS-0002 (no non-root USER): molecule/default/Dockerfile.* are test images with
+# systemd as PID 1, which must run as root. No other Dockerfile exists in this repository.
+DS-0002
