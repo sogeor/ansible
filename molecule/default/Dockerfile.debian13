@@ -1,0 +1,12 @@
+# Test image: the distribution of a Sogeor server with systemd as PID 1.
+FROM debian:13@sha256:4c25275446ca371766b8b093c696782eabce06263fccacb8d5d813b3dc44b308
+
+ENV container=docker DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates python3 sudo systemd systemd-sysv \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+STOPSIGNAL SIGRTMIN+3
+CMD ["/lib/systemd/systemd"]

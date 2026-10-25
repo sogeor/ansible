@@ -1,0 +1,16 @@
+# Checks that hold for every server; each role adds its own checks here.
+- name: Verify
+  hosts: all
+  gather_facts: true
+  tasks:
+    - name: Distribution matches the server
+      ansible.builtin.assert:
+        that: >-
+          (inventory_hostname == 'odin' and ansible_distribution == 'Debian' and ansible_distribution_major_version == '13')
+          or (inventory_hostname == 'zelda' and ansible_distribution == 'Ubuntu' and ansible_distribution_version == '24.04')
+        quiet: true
+
+    - name: Systemd is PID 1
+      ansible.builtin.assert:
+        that: ansible_service_mgr == 'systemd'
+        quiet: true

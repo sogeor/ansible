@@ -120,6 +120,14 @@ ansible-playbook -i localhost, --syntax-check site.yml
 ansible-playbook -i localhost, --syntax-check status.yml
 ```
 
+Roles are tested with [Molecule](https://ansible.readthedocs.io/projects/molecule/) in Docker: `molecule/default` runs `site.yml` and `status.yml` against containers that mirror the servers (`odin` on Debian 13, `zelda` on Ubuntu 24.04, both with systemd), checks that a second run changes nothing and runs `verify.yml`. It needs Docker and no secrets:
+
+```bash
+pipx inject ansible-core molecule "molecule-plugins[docker]" --include-apps
+ansible-galaxy collection install community.docker
+molecule test
+```
+
 Pull requests run the same checks in CI without secrets or access to the servers. Versions in `group_vars` carry `# renovate:` comments and are updated by Renovate.
 
 ## Maintainers
