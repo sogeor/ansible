@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.3](https://github.com/sogeor/ansible/compare/v1.0.2...v1.0.3) (2026-10-25)
+
+
+### Changed
+
+* update sogeor/workflows action to v1.2.0 ([#23](https://github.com/sogeor/ansible/issues/23)) ([513ff59](https://github.com/sogeor/ansible/commit/513ff59707ad296ba39f6298aeb45bab9ee91f04))
+
 ## [1.0.2](https://github.com/sogeor/ansible/compare/v1.0.1...v1.0.2) (2026-10-24)
 
 
