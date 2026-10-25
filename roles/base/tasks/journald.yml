@@ -1,0 +1,16 @@
+- name: Journald configuration directory
+  ansible.builtin.file:
+    path: /etc/systemd/journald.conf.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Persistent journal with a size limit
+  ansible.builtin.template:
+    src: journald.conf.j2
+    dest: /etc/systemd/journald.conf.d/50-sogeor.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart journald

@@ -1,0 +1,5 @@
+# {{ ansible_managed }}
+[Timer]
+OnCalendar=
+OnCalendar=*-*-* {{ item.time }}
+RandomizedDelaySec={{ base_timer_random_delay }}
