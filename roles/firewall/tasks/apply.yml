@@ -1,0 +1,100 @@
+# Included only when the ruleset changes, so the connection is reset only then.
+- name: Apply ruleset with automatic rollback
+  block:
+    - name: No rollback is pending from an earlier run # noqa: command-instead-of-module
+      ansible.builtin.command:
+        cmd: systemctl is-active sogeor-fw-rollback.timer
+      register: firewall_pending
+      changed_when: false
+      failed_when: firewall_pending.rc == 0
+
+    - name: Forget a finished rollback unit # noqa: command-instead-of-module
+      ansible.builtin.command:
+        cmd: systemctl reset-failed sogeor-fw-rollback.service sogeor-fw-rollback.timer
+      changed_when: false
+      failed_when: false
+
+    - name: Save the active table for rollback
+      ansible.builtin.shell:
+        cmd: |
+          set -o pipefail
+          {
+            echo 'table inet host'
+            echo 'delete table inet host'
+            nft list table inet host 2>/dev/null || true
+          } > {{ firewall_state_dir }}/nftables-host.prev
+        executable: /bin/bash
+      changed_when: true
+
+    - name: Arm rollback timer
+      ansible.builtin.command:
+        cmd: >-
+          systemd-run --unit=sogeor-fw-rollback --on-active={{ firewall_rollback_seconds }}
+          /usr/sbin/nft -f {{ firewall_state_dir }}/nftables-host.prev
+      changed_when: true
+
+    - name: Rollback is armed
+      ansible.builtin.set_fact:
+        firewall_armed: true
+
+    - name: Load new ruleset
+      ansible.builtin.command:
+        cmd: "nft -f {{ firewall_state_dir }}/nftables.conf.new"
+      changed_when: true
+
+    - name: Drop the persistent SSH connection
+      ansible.builtin.meta: reset_connection
+
+    - name: Reconnect through the new ruleset
+      ansible.builtin.wait_for_connection:
+        delay: 1
+        timeout: 60
+
+    - name: Read the active table
+      ansible.builtin.command:
+        cmd: nft list table inet host
+      register: firewall_active
+      changed_when: false
+
+    - name: SSH port is open and the input policy is drop
+      ansible.builtin.assert:
+        that:
+          - "'policy drop' in firewall_active.stdout"
+          - "('tcp dport ' ~ firewall_ssh_port ~ ' accept') in firewall_active.stdout"
+        quiet: true
+
+    - name: Disarm rollback timer
+      ansible.builtin.systemd_service:
+        name: sogeor-fw-rollback.timer
+        state: stopped
+
+    - name: Install as boot configuration
+      ansible.builtin.copy:
+        src: "{{ firewall_state_dir }}/nftables.conf.new"
+        dest: /etc/nftables.conf
+        remote_src: true
+        owner: root
+        group: root
+        mode: "0755"
+
+  rescue:
+    - name: Restore the previous table now if the host is still reachable
+      ansible.builtin.command:
+        cmd: "nft -f {{ firewall_state_dir }}/nftables-host.prev"
+      when: firewall_armed | default(false)
+      changed_when: true
+      failed_when: false
+
+    - name: Disarm rollback timer after restoring
+      ansible.builtin.systemd_service:
+        name: sogeor-fw-rollback.timer
+        state: stopped
+      when: firewall_armed | default(false)
+      failed_when: false
+
+    - name: Stop the play for this host
+      ansible.builtin.fail:
+        msg: >-
+          The new ruleset failed and the previous table was restored; /etc/nftables.conf is unchanged.
+          If the host was unreachable, the rollback timer restores the table within
+          {{ firewall_rollback_seconds }} seconds.
