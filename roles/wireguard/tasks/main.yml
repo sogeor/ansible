@@ -1,0 +1,68 @@
+- name: WireGuard settings are complete
+  ansible.builtin.assert:
+    that:
+      - wireguard_private_key is match('^[A-Za-z0-9+/]{43}=$')
+      - wireguard_address is match('^172\.20\.\d{1,3}\.\d{1,3}$')
+      - wireguard_peers | length > 0
+    fail_msg: wg_private_key must be a WireGuard key and wg_address an address in 172.20.0.0/20
+    quiet: true
+  no_log: true
+  tags: [wireguard]
+
+- name: Peers have real public keys
+  ansible.builtin.assert:
+    that:
+      - item.public_key is match('^[A-Za-z0-9+/]{43}=$')
+      - item.address is match('^172\.20\.\d{1,3}\.\d{1,3}$')
+    fail_msg: "Peer {{ item.name }} needs a WireGuard public key and an address in 172.20.0.0/20"
+    quiet: true
+  loop: "{{ wireguard_peers }}"
+  loop_control:
+    label: "{{ item.name }}"
+  tags: [wireguard]
+
+- name: WireGuard tools
+  ansible.builtin.apt:
+    name: [iproute2, wireguard-tools]
+    state: present
+  tags: [wireguard]
+
+- name: WireGuard configuration directory
+  ansible.builtin.file:
+    path: /etc/wireguard
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+  tags: [wireguard]
+
+# Interface address and port without the key: a change here needs a restart, not syncconf.
+- name: Interface parameters
+  ansible.builtin.copy:
+    dest: "/etc/wireguard/.{{ wireguard_interface }}.interface"
+    content: "{{ wireguard_address }}/{{ wireguard_prefix }} {{ wireguard_port }}\n"
+    owner: root
+    group: root
+    mode: "0600"
+  notify: Restart WireGuard
+  tags: [wireguard]
+
+- name: Interface configuration
+  ansible.builtin.template:
+    src: wg.conf.j2
+    dest: "/etc/wireguard/{{ wireguard_interface }}.conf"
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+  diff: false
+  notify: Reload WireGuard
+  tags: [wireguard]
+
+- name: WireGuard interface is up
+  ansible.builtin.systemd_service:
+    name: "wg-quick@{{ wireguard_interface }}"
+    enabled: true
+    state: started
+  when: wireguard_manage_service | bool
+  tags: [wireguard]

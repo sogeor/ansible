@@ -105,6 +105,7 @@
           - "'udp dport 51820 accept' in verify_nft.stdout"
           - "'@ssh_meter4' in verify_nft.stdout"
           - "'chain forward' in verify_nft.stdout"
+          - "'iifname \"wg0\" ip saddr 172.20.0.0/20 tcp dport { 822, 6443 } accept' in verify_nft.stdout"
           - "'dport 80' not in verify_nft.stdout"
           - "'dport 443' not in verify_nft.stdout"
         quiet: true
@@ -141,3 +142,31 @@
       ansible.builtin.assert:
         that: verify_rollback.rc != 0
         quiet: true
+
+    # --- role wireguard ---
+    - name: WireGuard configuration file
+      ansible.builtin.stat:
+        path: /etc/wireguard/wg0.conf
+      register: verify_wg_stat
+
+    - name: WireGuard configuration is private
+      ansible.builtin.assert:
+        that:
+          - verify_wg_stat.stat.exists
+          - verify_wg_stat.stat.mode == '0600'
+        quiet: true
+
+    - name: Read WireGuard configuration
+      ansible.builtin.slurp:
+        src: /etc/wireguard/wg0.conf
+      register: verify_wg_conf
+      no_log: true
+
+    - name: Interface address, port and the workstation peer
+      ansible.builtin.assert:
+        that:
+          - "('Address = ' ~ ('172.20.0.1' if inventory_hostname == 'odin' else '172.20.1.1') ~ '/20') in (verify_wg_conf.content | b64decode)"
+          - "'ListenPort = 51820' in (verify_wg_conf.content | b64decode)"
+          - "'AllowedIPs = 172.20.2.1/32' in (verify_wg_conf.content | b64decode)"
+        quiet: true
+      no_log: true

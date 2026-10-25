@@ -1,0 +1,10 @@
+# Throwaway WireGuard keys for the test hosts, kept only in the scenario's ephemeral directory.
+- name: Prepare
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Test WireGuard private keys
+      ansible.builtin.shell:
+        cmd: "umask 077 && openssl rand -base64 32 > {{ lookup('ansible.builtin.env', 'MOLECULE_EPHEMERAL_DIRECTORY') }}/wg-{{ item }}.key"
+        creates: "{{ lookup('ansible.builtin.env', 'MOLECULE_EPHEMERAL_DIRECTORY') }}/wg-{{ item }}.key"
+      loop: [odin, zelda]

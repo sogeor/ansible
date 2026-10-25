@@ -6,4 +6,5 @@
   roles:
     - role: base
     - role: firewall
-  # Next roles: wireguard, hardening, status_vps (guide, section 10.14)
+    - role: wireguard
+  # Next roles: hardening, status_vps (guide, section 10.14)
