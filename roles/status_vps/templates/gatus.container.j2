@@ -1,0 +1,27 @@
+# {{ ansible_managed }}
+[Unit]
+Description=Gatus status page
+Wants=network-online.target
+After=network-online.target
+
+[Container]
+ContainerName=gatus
+Image=ghcr.io/twin/gatus:{{ status_vps_gatus_version }}
+Pull=missing
+# Listens on 127.0.0.1:8080 (config.yaml); checks need outbound access and raw sockets for ICMP
+Network=host
+Environment=GATUS_CONFIG_PATH=/config/config.yaml
+EnvironmentFile=/etc/gatus/env
+Volume={{ status_vps_config_dir }}/config.yaml:/config/config.yaml:ro
+Volume=/var/lib/gatus:/data
+ReadOnly=true
+NoNewPrivileges=true
+DropCapability=all
+AddCapability=NET_RAW
+
+[Service]
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

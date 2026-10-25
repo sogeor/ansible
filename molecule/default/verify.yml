@@ -97,7 +97,7 @@
       register: verify_nft
       changed_when: false
 
-    - name: Only SSH and WireGuard are open, nothing is forwarded
+    - name: Only SSH, WireGuard and the status page are open, nothing is forwarded
       ansible.builtin.assert:
         that:
           - "'policy drop' in verify_nft.stdout"
@@ -106,8 +106,7 @@
           - "'@ssh_meter4' in verify_nft.stdout"
           - "'chain forward' in verify_nft.stdout"
           - "'iifname \"wg0\" ip saddr 172.20.0.0/20 tcp dport { 822, 6443 } accept' in verify_nft.stdout"
-          - "'dport 80' not in verify_nft.stdout"
-          - "'dport 443' not in verify_nft.stdout"
+          - "('tcp dport { 80, 443 } accept' in verify_nft.stdout) == (inventory_hostname == 'zelda')"
         quiet: true
 
     - name: No Debian accept-all table
@@ -170,3 +169,45 @@
           - "'AllowedIPs = 172.20.2.1/32' in (verify_wg_conf.content | b64decode)"
         quiet: true
       no_log: true
+
+    # --- role status_vps (zelda) ---
+    - name: Status page files
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      register: verify_status_files
+      loop:
+        - /etc/gatus/env
+        - /etc/caddy/Caddyfile
+        - /etc/containers/systemd/gatus.container
+        - /etc/containers/systemd/caddy.container
+        - /opt/status/config.yaml
+        - /opt/status/assets/logo.svg
+      when: inventory_hostname == 'zelda'
+
+    - name: Status page files exist and secrets are private
+      ansible.builtin.assert:
+        that:
+          - verify_status_files.results | map(attribute='stat.exists') | min
+          - verify_status_files.results[0].stat.mode == '0600'
+        quiet: true
+      when: inventory_hostname == 'zelda'
+
+    - name: Read Quadlet units and Caddyfile
+      ansible.builtin.slurp:
+        src: "{{ item }}"
+      register: verify_status_units
+      loop:
+        - /etc/containers/systemd/gatus.container
+        - /etc/containers/systemd/caddy.container
+        - /etc/caddy/Caddyfile
+      when: inventory_hostname == 'zelda'
+
+    - name: Images are pinned by digest, Caddy serves status.sogeor.com
+      ansible.builtin.assert:
+        that:
+          - (verify_status_units.results[0].content | b64decode) is search('Image=ghcr\.io/twin/gatus:v[0-9.]+@sha256:[a-f0-9]{64}')
+          - (verify_status_units.results[1].content | b64decode) is search('Image=docker\.io/library/caddy:[0-9.]+@sha256:[a-f0-9]{64}')
+          - "'DropCapability=all' in (verify_status_units.results[0].content | b64decode)"
+          - "'status.sogeor.com {' in (verify_status_units.results[2].content | b64decode)"
+        quiet: true
+      when: inventory_hostname == 'zelda'

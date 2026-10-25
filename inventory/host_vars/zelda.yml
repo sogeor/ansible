@@ -1,6 +1,9 @@
 ---
 swap_size_mb: 1024
 
+# role firewall: Caddy for status.sogeor.com (ACME HTTP-01 and HTTPS)
+firewall_public_tcp: [80, 443]
+
 # role base: reboot after kernel updates at 00:30 UTC; only cloud-init from the Selectel repository
 base_auto_reboot: true
 base_selectel_cloud_init: true

@@ -7,4 +7,5 @@
     - role: base
     - role: firewall
     - role: wireguard
-  # Next roles: hardening, status_vps (guide, section 10.14)
+    - role: status_vps
+  # Next roles: hardening (guide, section 10)

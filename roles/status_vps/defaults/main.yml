@@ -1,0 +1,19 @@
+# Public status page: Gatus behind Caddy, both Podman containers pinned by digest (Quadlet units).
+status_vps_domain: status.sogeor.com
+status_vps_acme_email: security@sogeor.com
+
+# renovate: datasource=docker depName=ghcr.io/twin/gatus
+status_vps_gatus_version: "v5.37.0@sha256:094eb186e55235db367e90e9d56140e5897b7044c41de23cde4cc18e6da1242e"
+# renovate: datasource=docker depName=docker.io/library/caddy
+status_vps_caddy_version: "2.11.7@sha256:504a44d7d74bd2bc28a66afc4774912fc21223ca8a67734af1c54ab2f999b489"
+
+# Gatus configuration and assets (public repository, our protected master).
+status_vps_config_repo: https://github.com/sogeor/status.git
+status_vps_config_ref: master
+status_vps_config_dir: /opt/status
+
+# TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID, from host_vars/<host>.sops.yaml
+status_vps_gatus_env: "{{ gatus_env }}"
+
+# false in Molecule: containers are not started inside a container.
+status_vps_manage_containers: true
