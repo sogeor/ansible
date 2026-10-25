@@ -89,3 +89,55 @@
           - "'OnCalendar=*-*-* 23:00' in (verify_timers.results[0].content | b64decode)"
           - "'OnCalendar=*-*-* 00:00' in (verify_timers.results[1].content | b64decode)"
         quiet: true
+
+    # --- role firewall ---
+    - name: Active table inet host
+      ansible.builtin.command:
+        cmd: nft list table inet host
+      register: verify_nft
+      changed_when: false
+
+    - name: Only SSH and WireGuard are open, nothing is forwarded
+      ansible.builtin.assert:
+        that:
+          - "'policy drop' in verify_nft.stdout"
+          - "'tcp dport 822 accept' in verify_nft.stdout"
+          - "'udp dport 51820 accept' in verify_nft.stdout"
+          - "'@ssh_meter4' in verify_nft.stdout"
+          - "'chain forward' in verify_nft.stdout"
+          - "'dport 80' not in verify_nft.stdout"
+          - "'dport 443' not in verify_nft.stdout"
+        quiet: true
+
+    - name: No Debian accept-all table
+      ansible.builtin.command:
+        cmd: nft list tables
+      register: verify_tables
+      changed_when: false
+
+    - name: Only table inet host
+      ansible.builtin.assert:
+        that: "'table inet filter' not in verify_tables.stdout"
+        quiet: true
+
+    - name: Boot configuration is the applied ruleset
+      ansible.builtin.slurp:
+        src: /etc/nftables.conf
+      register: verify_nft_conf
+
+    - name: Boot configuration is managed by the firewall role
+      ansible.builtin.assert:
+        that: "'(role firewall)' in (verify_nft_conf.content | b64decode)"
+        quiet: true
+
+    - name: Rollback timer state # noqa: command-instead-of-module
+      ansible.builtin.command:
+        cmd: systemctl is-active sogeor-fw-rollback.timer
+      register: verify_rollback
+      changed_when: false
+      failed_when: false
+
+    - name: No rollback is pending
+      ansible.builtin.assert:
+        that: verify_rollback.rc != 0
+        quiet: true

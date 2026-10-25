@@ -39,10 +39,7 @@ cluster_api_sans:
   - 10.0.0.1                          # ClusterIP of kubernetes.default
   - 172.20.0.1                        # odin in the admin WireGuard
 
-# --- Firewall ---
-fw_peer_nodes: []                     # other cluster nodes (guide 16)
-fw_public_tcp: [80, 443]
-fw_public_udp: [443]
+# --- Firewall: defaults in roles/firewall; service roles open their own ports ---
 
 # --- Admin WireGuard (guide 3.1.3, 10.13); wg_address comes from tofu ---
 wg_allowed_tcp: [822, 6443]

@@ -5,4 +5,5 @@
   max_fail_percentage: 0
   roles:
     - role: base
-  # Next roles: firewall, wireguard, hardening, status_vps (guide, section 10.14)
+    - role: firewall
+  # Next roles: wireguard, hardening, status_vps (guide, section 10.14)
