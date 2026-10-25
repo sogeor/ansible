@@ -1,6 +1,6 @@
 backup_s3_access_key: ENC[AES256_GCM,data:6srm,iv:Qef4S/LJnVBWspAAs4ji+xaqse9oZ2wfF5tMlV9och0=,tag:GBOI2LlaS3P1AsFw5O+CQg==,type:str]
 backup_s3_secret_key: ENC[AES256_GCM,data:9KJ6,iv:MH7jyFs/6FC0HUjK8LCPioFQ/0rrVOl0qtqHLsQrkdk=,tag:Q54UkgwILmFS9UVs2HNCyg==,type:str]
-wg_private_key: ENC[AES256_GCM,data:ZoWk,iv:rT/mOWb0pRtirhlIcYLbLP70U+Dm/fNL2OuOOTVs8Tw=,tag:+ADHtLtYElKWTQmBixXH1g==,type:str]
+wg_private_key: ENC[AES256_GCM,data:ykYCDEecvwVpgVYxk9J/rZF93AOBy7PTLxuwueZ4QPSfpk+jdpgxUqcB4bQ=,iv:UwZl4YuD0cHRZ9fRhpxZRyKWQIisy3wZVmw75rbSyvg=,tag:6TmaLB+b/QuefgvgXfKm/Q==,type:str]
 sops:
     age:
         - enc: |
@@ -21,7 +21,7 @@ sops:
             1kBvCQGAwupg080NYlI6ARRURlmPDNYaCCIOIwGY9JeU7m2RpzU4jQ==
             -----END AGE ENCRYPTED FILE-----
           recipient: age1fmvva4v6crjz7r4sqfptnlvv6h9dn2hucxxm5kv9022jjynnpfuqmzcn2w
-    lastmodified: "2026-10-24T13:43:15Z"
-    mac: ENC[AES256_GCM,data:KcjMKeB7mHR61ALQe4bSeevpb7ZWn5tZJGng/Y0EfkcmmRnrJ8t7vNYissyOmWgus4bFn3cL3p/1lm27U86rUus20N8V2ar+XPTMUFW4vOiKh8YYMhXWms9/MaCgdTx2xiGROoDC/SUkdYh6t/p6zi2sOXQmBH5JJEYVMVtKmCY=,iv:CSV5GFOBB1S9JPqpRdYYcAmb0tXepeP5E4rcgjA3TdA=,tag:zxd4Kz7B3uzNjaF4ZsFtGw==,type:str]
+    lastmodified: "2026-10-25T19:49:47Z"
+    mac: ENC[AES256_GCM,data:6ZD+ZL5pzl9EEoTZvfEp0ic086NqRjWM8Cr+upk0KQLhPLW8QSkm53n3vY4goSNp0A4w49q3+S5vqOGS9lWHi9D8Kfv5BLfcyIiOnSDWYyFVBwcyJFvhBQLVz9xyReh1a5efUWWWjg1jxTXjPYETEMndBXzj0ny4pKQSm5EzWPY=,iv:zwtbYw0qlM8WuJ8NpjuJWlx8bGJBkh0EzS5rtuyauwI=,tag:7He+VmMIQSEIdX89GZppFA==,type:str]
     unencrypted_suffix: _unencrypted
     version: 3.13.3

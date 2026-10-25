@@ -5,3 +5,7 @@ base_auto_reboot: true
 # The test image has no Selectel keyring; the repository exists only on the VDS.
 base_selectel_cloud_init: false
 swap_size_mb: 1024
+# role wireguard: test key from prepare.yml; a container cannot create the interface
+wg_address: 172.20.1.1
+wg_private_key: "{{ lookup('ansible.builtin.file', lookup('ansible.builtin.env', 'MOLECULE_EPHEMERAL_DIRECTORY') ~ '/wg-zelda.key') }}"
+wireguard_manage_service: false

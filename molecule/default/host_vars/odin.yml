@@ -5,3 +5,7 @@ base_journal_max_use: 2G
 base_packages_extra: [efibootmgr, mdadm, nvme-cli, smartmontools, xfsprogs]
 node_iface: eth0
 node_ip: 127.0.0.1
+# role wireguard: test key from prepare.yml; a container cannot create the interface
+wg_address: 172.20.0.1
+wg_private_key: "{{ lookup('ansible.builtin.file', lookup('ansible.builtin.env', 'MOLECULE_EPHEMERAL_DIRECTORY') ~ '/wg-odin.key') }}"
+wireguard_manage_service: false

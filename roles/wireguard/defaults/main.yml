@@ -1,0 +1,10 @@
+# Admin WireGuard (172.20.0.0/20): each server is an endpoint, admin devices are peers.
+wireguard_interface: wg0
+wireguard_address: "{{ wg_address }}" # from the tofu inventory
+wireguard_prefix: 20
+wireguard_port: "{{ wg_port }}"
+wireguard_private_key: "{{ wg_private_key }}" # host_vars/<host>.sops.yaml
+wireguard_peers: "{{ wg_peers }}"
+
+# false in Molecule: a container cannot create the interface.
+wireguard_manage_service: true

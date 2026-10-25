@@ -6,5 +6,6 @@
   roles:
     - role: base
     - role: firewall
+    - role: wireguard
   # Next roles, one pull request at a time (guide, section 10):
-  # storage, wireguard, hardening, kubernetes_node, kubeadm_init, cilium, flux, backup
+  # storage, hardening, kubernetes_node, kubeadm_init, cilium, flux, backup

@@ -1,0 +1,13 @@
+# Address or port changes need a restart; peer and key changes are applied in place.
+- name: Restart WireGuard
+  ansible.builtin.systemd_service:
+    name: "wg-quick@{{ wireguard_interface }}"
+    state: restarted
+  when: wireguard_manage_service | bool
+
+- name: Reload WireGuard
+  ansible.builtin.shell:
+    cmd: "wg syncconf {{ wireguard_interface }} <(wg-quick strip {{ wireguard_interface }})"
+    executable: /bin/bash
+  changed_when: true
+  when: wireguard_manage_service | bool
