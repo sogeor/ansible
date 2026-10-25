@@ -1,7 +1,12 @@
 ---
 collections:
   - name: ansible.posix
+    version: 2.2.2
   - name: ansible.utils
+    version: 6.1.1
   - name: cloud.terraform
+    version: 4.0.0
   - name: community.general
+    version: 13.5.0
   - name: community.sops
+    version: 2.5.0
