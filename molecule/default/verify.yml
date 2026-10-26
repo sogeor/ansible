@@ -104,6 +104,9 @@
           - "'tcp dport 822 accept' in verify_nft.stdout"
           - "'udp dport 51820 accept' in verify_nft.stdout"
           - "'@ssh_meter4' in verify_nft.stdout"
+          - "'limit rate over 30/minute burst 60 packets' in verify_nft.stdout"
+          # The admin tunnel is accepted before the SSH rate limit applies
+          - verify_nft.stdout.find('iifname "wg0"') < verify_nft.stdout.find('@ssh_meter4 {')
           - "'chain forward' in verify_nft.stdout"
           - "'iifname \"wg0\" ip saddr 172.20.0.0/20 tcp dport { 822, 6443 } accept' in verify_nft.stdout"
           - "('tcp dport { 80, 443 } accept' in verify_nft.stdout) == (inventory_hostname == 'zelda')"

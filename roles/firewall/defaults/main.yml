@@ -1,7 +1,7 @@
 # Ports are opened by the roles that run the services, not in advance.
 firewall_ssh_port: "{{ ssh_port }}"
-firewall_ssh_rate: 10/minute # new SSH connections per source address
-firewall_ssh_burst: 20
+firewall_ssh_rate: 30/minute # new SSH connections per source address (Ansible opens several per run)
+firewall_ssh_burst: 60
 firewall_wg_port: "{{ wg_port }}"
 firewall_public_tcp: []
 firewall_public_udp: []

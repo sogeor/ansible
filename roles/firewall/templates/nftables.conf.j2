@@ -25,6 +25,11 @@ table inet host {
         ip saddr {{ firewall_pod_cidr }} accept
         ip daddr {{ firewall_pod_cidr }} accept
 {% endif %}
+{% if firewall_wireguard %}
+
+        # Admin tunnel: peers are authenticated by WireGuard, so not rate-limited
+        iifname "{{ firewall_wg_interface }}" ip saddr {{ firewall_wg_network }} tcp dport { {{ firewall_wg_allowed_tcp | join(', ') }} } accept
+{% endif %}
 
         # SSH: at most {{ firewall_ssh_rate }} new connections per address (burst {{ firewall_ssh_burst }})
         tcp dport {{ firewall_ssh_port }} ct state new add @ssh_meter4 { ip saddr limit rate over {{ firewall_ssh_rate }} burst {{ firewall_ssh_burst }} packets } drop
@@ -33,9 +38,6 @@ table inet host {
 
         # WireGuard answers only peers with a known key
         udp dport {{ firewall_wg_port }} accept
-{% if firewall_wireguard %}
-        iifname "{{ firewall_wg_interface }}" ip saddr {{ firewall_wg_network }} tcp dport { {{ firewall_wg_allowed_tcp | join(', ') }} } accept
-{% endif %}
 {% if firewall_public_tcp %}
         tcp dport { {{ firewall_public_tcp | join(', ') }} } accept
 {% endif %}
